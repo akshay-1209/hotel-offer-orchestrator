@@ -1,0 +1,40 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      REDIS_URL: redis://redis:6379
+      TEMPORAL_ADDRESS: temporal:7233
+      APP_URL: http://app:3000
+    depends_on:
+      - redis
+      - temporal
+
+  worker:
+    build: .
+    command: npm run worker
+    environment:
+      REDIS_URL: redis://redis:6379
+      TEMPORAL_ADDRESS: temporal:7233
+      APP_URL: http://app:3000
+    depends_on:
+      - redis
+      - temporal
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  temporal:
+    image: temporalio/temporal:latest
+    ports:
+      - "7233:7233"
+      - "8233:8233"
+    volumes:
+      - temporal-data:/home/temporal
+    command: server start-dev --ip 0.0.0.0 --db-filename /home/temporal/temporal.db
+
+volumes:
+  temporal-data:
